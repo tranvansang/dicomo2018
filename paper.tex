@@ -11,6 +11,7 @@
 \usepackage{CJKutf8}
 \graphicspath{{.figures/}}
 \graphicspath{{figures/}}
+\newcommand\newblock{\empty}
 
 \def\Underline{\setbox0\hbox\bgroup\let\\\endUnderline}
 \def\endUnderline{\vphantom{y}\egroup\smash{\underline{\box0}}\\}
@@ -20,7 +21,7 @@
 
 \title{A Research on Big Data and AI Analysis Algorithm Optimization Using GPUs}
 
-\affiliate{IPSJ}{Information Processing Society of Japan}
+%\affiliate{IPSJ}{Information Processing Society of Japan}
 \paffiliate{DICOMO}{DICOMO2018}
 \affiliate{SOICT}{University of Tokyo, Graduate School of Information Science and Technology, Social ICT Center}
 \affiliate{CS}{University of Tokyo, Graduate School of Information Science and Technology, Department of Information Science}
@@ -52,7 +53,7 @@ First, data was filtered by removing all data of first day and last day because 
 \begin{center}
   \begin{table}
     \caption{Data Table for Training Model}\label{table:db_description}
-    \begin{tabular}{|l|l|}
+    \begin{tabular}{|p{\columnwidth / 5}|p{\columnwidth / 5 * 4}|}
       \toprule
       \textbf{Feature} & \textbf{Description} \\
       \midrule
@@ -73,8 +74,9 @@ At current development, the best way is likely to treat user id feature as numer
 This data design may raise a question on why chapter id feature was removed. In fact, if chapter was a static feature, in other words, if it never changed by time, it would have been considered to be a component of the model. Moreover, chapters are also grouped into 207 groups by theirs manga with many useful additional data. This has potential to reduce input data size while still prevent losing information on what user read. However, if chapter information is included in the model, by time user might lose their interest in reading some chapters, their reading behaviour with the chapter he/she read will be come variate, and the trained model will be invalidated by time.\newline
 For supervised learning model training purpose, the next step in the data process is negative sample generation. User id and weekday were uniformly randomized from their domains. All newly generated values' label are false. However, with uniform generator for remaining 24 features of number of reading, Decision Tree model produced a predictor that can correctly predict 99.31\% test samples, which implies a bad data generation rather than leveraging the training model's performance. Hence, we investigated new way to generate number of reading to generate data more likely to existing data. Because all users usually do not read manga on every hour, there should be more zero value in these 24 features. In order to do this, firstly, number of total reading of each user was investigated. Figure~\ref{fig:total_hist} 2 shows this value histogram.\newline
 \begin{figure}[ht]
+  \vspace*{-1cm}
   \centering
-  \includegraphics[width=\textwidth,natwidth=1024,natheight=295]{total_hist.png}
+  \includegraphics[width=\columnwidth,natwidth=1024,natheight=295]{total_hist.png}
   \caption{Total number of reading per day of each user histogram}\label{fig:total_hist}
 \end{figure}
 \newline
@@ -88,15 +90,17 @@ Figure~\ref{fig:total_hist} illustrates that total number of reading in a day re
 Following unsupervised approaches only consider positive samples with \texttt{label} feature removed.\newline
 The very first approach was unsupervised k-mean model. All samples were grouped into \(k\) clusters of interested to minimize each data group's variance based on their Euclidean vector distance. Modified version of gap statistics in~\cite{RSSB:RSSB293} was used to identify the \(k\), number of clusters. Found number of clusters was 7. Figure~\ref{fig:gap_stat} shows gap statistic value of variate \(k\) values. Statistic value show how much sum of squared distance within cluster clustering gains by increase number of clusters from \(k - 1\) to \(k\). In gap statistic, \(k\) value should be chosen with their highest gap statistic value. However, from Figure~\ref{fig:gap_stat}, gap statistics seem to increase consistently. We heuristically chose \(k = 7\) because of the slight decrease of gap statistic value when \(k\) goes from 7 to 8. Subsequently, clusters were evaluated by calculating how many clusters each user has their samples belong to in average. Evaluated number was 4.7 clusters over total 7 clusters. In other words, each user has samples presenting more than half of all clusters, while at most one or two clusters had been expected for k-means model to be adopted.\newline
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth,natwidth=2060,natheight=1398]{gap_stat.png}
+  \includegraphics[width=\columnwidth,natwidth=2060,natheight=1398]{gap_stat.png}
   \caption{Gap statistics of multiple \(k\) value}\label{fig:gap_stat}
 \end{figure}
 \newline
  Similar to k-means, k-nearest neighbor model was also applied by finding most \(k\) nearest records from training data for each record in testing data. Dominated user in set of \(k\) nearest neighbors is used to label test data. Unlike k-means model, k-nearest neighbor can use any of distance function. Figure~\ref{fig:knn} illustrates error rate of this model with variate minkowski distance, which points out that this model cannot make correct prediction of more than 4\% of test samples.\newline
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1024,natheight=805]{knn.png}
+  \includegraphics[width=\columnwidth,natwidth=1024,natheight=805]{knn.png}
   \caption{Error rate of k-nearest neighbor with different minkowski distance (\(k = 10\))}\label{fig:knn}
 \end{figure}
 \newline
@@ -108,14 +112,27 @@ hMETIS library~\cite{karypis1999multilevel,hmetis} implements multilevel hypergr
  In supervised approaches, all 27 features were used with input data separated into training samples, and test samples. Boolean label feature is target feature to be predicted.\newline
 Direct application of Decision Tree model on training data set of 6,345,144 records produced a predictor that can predict correctly 2,300,767 (84.61\%) samples from test data set of 2,719,348 records, gave False Acceptance Rate be 9.15\% and False Rejection Rate be 6.24\% with False Acceptance and False Rejection Rate be defined as following
 \begin{center}
-  \[ \text{False Acceptance Rate} = \frac{\text{number of accepted negative test samples}}{\text{number of test samples}} = \frac{248,951}{2,719,348}=9.15\% \]
+  \begin{equation}
+    \notag
+    \begin{aligned}
+      \text{False Acceptance Rate} &= \frac{\text{number of accepted negative test samples}}{\text{number of test samples}} \\
+      &= \frac{248,951}{2,719,348}=9.15\%
+    \end{aligned}
+  \end{equation}
 \end{center}
 \begin{center}
-  \[ \text{False Rejection Rate} = \frac{\text{number of rejected positive test samples}}{\text{number of test samples}} = \frac{169,630}{2,719,348}=6.24\% \]
+  \begin{equation}
+    \notag
+    \begin{aligned}
+      \text{False Rejection Rate} &= \frac{\text{number of rejected positive test samples}}{\text{number of test samples}} \\
+      &= \frac{169,630}{2,719,348}=6.24\%
+    \end{aligned}
+  \end{equation}
 \end{center}
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1024,natheight=485]{dtree.png}
+  \includegraphics[width=\columnwidth,natwidth=1024,natheight=485]{dtree.png}
   \caption{Prediction tree generated by Decision Tree model}\label{fig:dtree}
 \end{figure}
 Figure~\ref{fig:dtree} shows generated tree by Decision Tree model. The tree simply differentiates samples by their user's id by a threshold value, which is too simple to be applicable.\newline
@@ -126,15 +143,17 @@ Figure~\ref{fig:dtree} shows generated tree by Decision Tree model. The tree sim
 General Linear model was chosen to be optimized with GPU acceleration. General Linear model is a algorithm whose running time mostly concentrates on least squares solver in multiple iterations. R implementation solves the least squares equation via QR decomposition with Householder reflection, which make the algorithm computational complexity be \(O(m \times n ^ 2 \times k)\) where m is number of samples, n is number of features, and \(k\) is number of iteration until convergence.\newline
 Firstly, R's standard General Linear model training process was profiled line by line by profvis package. Figure~\ref{fig:profvis} shows profiled result.\newline
 \begin{figure}[ht]
+  \vspace*{-1cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1021,natheight=151]{profvis.png}
+  \includegraphics[width=\columnwidth,natwidth=1021,natheight=151]{profvis.png}
   \caption{R General Linear model profiling result}\label{fig:profvis}
 \end{figure}
 \newline
 Longer bar presents longer time it takes to finish the call. The very bottom bar, glm, presents the most outer call be triggered at command line. Subsequently, 2 eval calls were processed as wrapper functions to generalize the algorithm. Glm.fit is the fitting function that iterates a loop to modify coefficient vector until converged. Each iteration calls a \texttt{.Call} subroutine, which is the most intensive code portion and is written in C. Figure~\ref{fig:wrapping} illustrates the program flow. It also denotes that glm.fit subroutine takes 93.42\% of glm call and \texttt{.Call} subroutine takes the majority 58.13\% running time of glm.fit in all iterations. This implies that optimizing the bottleneck \texttt{.Call} subroutine will be able to speed up the algorithm by at most 2.2 times. Although 2.2 times speed up upper bound is not a much gain, the optimization on this subroutine is mandatory and a basis for subsequent development on eliminating iteration overhead.\newline
 \begin{figure}[ht]
+  \vspace*{-2.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=411,natheight=362]{wrapping.png}
+  \includegraphics[width=\columnwidth,natwidth=411,natheight=362]{wrapping.png}
   \caption{General Linear model trainer program flow chart}\label{fig:wrapping}
 \end{figure}
 \newline
@@ -144,8 +163,9 @@ A matrix's dimension is proportional to the model input, and is 9,064,492 record
 Our optimization focuses on porting this external C program to make use of GPU power. Similar to the standard library implementation, it takes 3 steps to solve the least squares linear equation. Assume A is a matrix of m rows by n columns. First, A matrix is decomposed into form \(A = QR\) such that \(Q\) is unitary matrix of size \(m\), \(R\) is upper right triangular matrix of \(m\) row by \(n\) column. Next, reassign b by setting \(b \vcentcolon= t(Q) \times b\) where \(t(Q)\) is transpose of matrix \(Q\). And then evaluate final solution x via backward substitution such that Rx = b to take advantage of R being upper right triangular matrix. All 3 steps are available in CUDA Toolkit CUSOLVER library version 9.1 to directly use GPU acceleration for the calculation. However, in step 1 CUDA Toolkit CUSOLVER library does not support non linearly dependent columns input matrix. We investigated 2 ways to go through this barrier. First way is to run QR decomposition algorithm twice, one to detect and eliminate linearly dependent columns, and another to execute QR decomposition on linearly independent columns matrix. This version of optimization is called \texttt{CUSOLVER LS solver}. In second way, manual QR decomposition was conducted via Householder reflection, combined with linearly dependent columns removal in decomposition. This version of optimization is called \texttt{manual LS solver}. QR decomposition via Householder algorithm with its variance are described is described in~\cite{Kerr:2009:QDG:1513895.1513904}. The most simple version of the algorithm in this paper was adopted with slight modification to detect linearly dependent columns. When calculating Householder reflection matrix of a column, we check if its norm is greater than a value, namely tolerance value, if it is not greater than this threshold, this column will be moved into end of the matrix followed with previously calculated elements on the same column. At time of being written,~\cite{Kerr:2009:QDG:1513895.1513904} was believed that it is the fastest announced QR implementation executing entirely on the GPU~\cite{Kerr:2009:QDG:1513895.1513904}. In future development, we will investigate modifying this algorithm to achieve better overall result.\newline
  Figure~\ref{fig:qr_flow} describes CUSOLVER LS solver and manual LS solver programs' flow\newline
 \begin{figure}[ht]
+  \vspace*{-3.6cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=451,natheight=548]{qr_flow.png}
+  \includegraphics[width=\columnwidth,natwidth=451,natheight=548]{qr_flow.png}
   \caption{Least Squares Linear solvers program flow}\label{fig:qr_flow}
 \end{figure}
 \newline
@@ -157,77 +177,105 @@ Because of high portion of overhead timing and particular shape of input matrix,
 \section{Model evaluation}
  Trained General Linear model can predict correctly 78.71\% test data while False Acceptance Rate and False Rejection Rate were 10.69\% and 10.60\% respectively.
 \begin{center}
-  \[ \text{Correctness} = \frac{\text{Number of correctly predicted test samples}}{\text{number of test samples}} = \frac{2,140,394}{2,719,348}=78.71\% \]
+  \begin{equation}
+    \notag
+    \begin{aligned}
+      \text{Correctness} &= \frac{\text{Number of correctly predicted test samples}}{\text{number of test samples}} \\
+      &= \frac{2,140,394}{2,719,348}=78.71\%
+    \end{aligned}
+  \end{equation}
 \end{center}
 \begin{center}
-  \[ \text{False Acceptance Rate} = \frac{\text{number of accepted negative test samples}}{\text{number of test samples}} = \frac{290,583}{2,719,348}=10.69\% \]
+  \begin{equation}
+    \notag
+    \begin{aligned}
+      \text{False Acceptance Rate} &= \frac{\text{number of accepted negative test samples}}{\text{number of test samples}} \\
+      &= \frac{290,583}{2,719,348}=10.69\%
+    \end{aligned}
+  \end{equation}
 \end{center}
 \begin{center}
-  \[ \text{False Rejection Rate} = \frac{\text{number of rejected positive test samples}}{\text{number of test samples}} = \frac{288,371}{2,719,348}=10.60\% \]
+  \begin{equation}
+    \notag
+    \begin{aligned}
+      \text{False Rejection Rate} &= \frac{\text{number of rejected positive test samples}}{\text{number of test samples}} \\
+      &= \frac{288,371}{2,719,348}=10.60\%
+    \end{aligned}
+  \end{equation}
 \end{center}
 \begin{figure}[ht]
+  \vspace*{-2.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=827,natheight=805]{glm_coef.png}
+  \includegraphics[width=\columnwidth,natwidth=827,natheight=805]{glm_coef.png}
   \caption{Trained General Linear model's coefficients}\label{fig:glm_coef}
 \end{figure}
  According to Figure~\ref{fig:glm_coef}, trained General Linear model's coefficients of \(h_4, h_5, h_6\) have high absolute value to compensate its low numerical value compared to other features, as illustrated from Figure~\ref{fig:access_mean}. On the other hand, \(h_{22}, h_{23}, h_{24}, h_1\) features' coefficients have high absolute numerical to emphasize their diversity in our sample. This can be observed from Figure~\ref{fig:access_var} where these features' variances are relatively higher than the others.\newline
 
 \begin{figure}[ht]
+  \vspace*{-2.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=827,natheight=805]{access_var.png}
+  \includegraphics[width=\columnwidth,natwidth=827,natheight=805]{access_var.png}
   \caption{Access count variance each hour in a day}\label{fig:access_var}
 \end{figure}
 \begin{figure}[ht]
+  \vspace*{-1.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=827,natheight=484]{access_mean.png}
+  \includegraphics[width=\columnwidth,natwidth=827,natheight=484]{access_mean.png}
   \caption{Mean number of reading by hour in a day}\label{fig:access_mean}
 \end{figure}
 \section{Optimization}
 Time for training all data with standard R algorithm, manual LS solver and CUSOLVER LS solver were 112.79 seconds, 87.579 seconds, 88.897 seconds respectively. These timing result is described in detail in Figure~\ref{fig:qr_ret}\newline
 
 \begin{figure}[ht]
+  \vspace*{-1.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1200,natheight=742]{qr_ret.png}
+  \includegraphics[width=\columnwidth,natwidth=1200,natheight=742]{qr_ret.png}
   \caption{Training time of 3 implementation3}\label{fig:qr_ret}
 \end{figure}
 Figure~\ref{fig:qr_ret} shows that CUSOLVER LS solver C extension run around double (2.12 times) faster than R standard version \texttt{C\_Cdqrls}. Because of the major portion of overhead timing, the overall algorithm can speed up merely 1.27 times over maximal ideal speed up rate of 2.2 times. C extension running time of CUSOLVER LS solver is slightly faster than manual LS solver's one. This can be explained by the fact that input matrix is indeed linearly independent, CUSOLVER LS solver implementation only need to run QR decomposition once without caring about linear independence while manual LS solver version does care about. In CUSOLVER LS solver running time, there exists portion named \texttt{R-C protocol copying overhead}. This is time occupied by memory transfer between R program and C extension because CUSOLVER LS solver program does not use optimized interface while manual LS solver does. This portion elimination can be adopted with not much effort.\newline
 
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=857,natheight=484]{qr_blas_ret.png}
+  \includegraphics[width=\columnwidth,natwidth=857,natheight=484]{qr_blas_ret.png}
   \caption{Relation between BLAS accelerated run time with number of OMP cores}\label{fig:qr_blas_ret}
 \end{figure}
 
  According to Figure~\ref{fig:qr_blas_ret}, there is no strong relation between number of OMP threads and algorithm performance. Probably, R's extension \texttt{C\_Cdqrls} is not compiled with OpenMP\@. Before going to a solid conclusion, an experiment on CPU usage measurement of training algorithm was done by using Linux htop tool. Number of OpenMP threads was set to be 16, same with number of machine's physical cores. Figure~\ref{fig:htop} indicates a timing when htop catches a moment that all CPUs are fully used. However, the phenomenon disappeared immediately. This shows the fact that the training algorithm does not execute parallel well enough. The same experiment also was done to the C extension \texttt{C\_Cdqrls}. Eventually, there was no moment that more than 1 CPU is fully used. This opens an interesting topic for future research on parallelizing the training algorithm.\newline
 
 \begin{figure}[ht]
+  \vspace*{-1cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1902,natheight=550]{htop.png}
+  \includegraphics[width=\columnwidth,natwidth=1902,natheight=550]{htop.png}
   \caption{htop catches a glimpse when all CPUs are fully used}\label{fig:htop}
 \end{figure}
 
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1200,natheight=742]{nvprof_qr.png}
+  \includegraphics[width=\columnwidth,natwidth=1200,natheight=742]{nvprof_qr.png}
   \caption{GPU profiling result via nvprof of CUSOLVER LS solver}\label{fig:nvprof_qr}
 \end{figure}
 
 \begin{figure}[ht]
+  \vspace*{-2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1200,natheight=742]{nvprof_manual.png}
+  \includegraphics[width=\columnwidth,natwidth=1200,natheight=742]{nvprof_manual.png}
   \caption{GPU profiling result via nvprof of manual LS solver}\label{fig:nvprof_manual}
 \end{figure}
 From Figure~\ref{fig:nvprof_qr} and Figure~\ref{fig:nvprof_manual}, we can observe that CUDA memcpy routine, a memory transfer routine between CPU (host) and GPU (device), takes around 20\% of the execution on GPU device. This proves the potential of time reduction in future because in current implementation, all data is copied back to CPU after each iteration for convergence check while actually only a small portion of data is required.\newline
 
 \begin{figure}[ht]
+  \vspace*{-2.2cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1200,natheight=742]{c_square.png}
+  \includegraphics[width=\columnwidth,natwidth=1200,natheight=742]{c_square.png}
   \caption{Isolated C extension time comparison on 3000 rows by 2000 columns matrix}\label{fig:c_square}
 \end{figure}
 
 \begin{figure}[ht]
+  \vspace*{-1.5cm}
   \centering
-  \includegraphics[width=\textwidth/3,natwidth=1200,natheight=742]{c_narrow.png}
+  \includegraphics[width=\columnwidth,natwidth=1200,natheight=742]{c_narrow.png}
   \caption{Isolated C extension time comparison on 9,064,492 rows by 27 columns matrix}\label{fig:c_narrow}
 \end{figure}
 Figure~\ref{fig:c_square} and Figure~\ref{fig:c_narrow} emphasize matrix dimension's effect on C extension performance. With input matrix of 3,000 rows by 2,000 columns, GPU version speeded up LS solver by 17.94 times and 79.91 times resepectively. While with input matrix of 9,064,492 rows by 27 columns their speedup rate were merely 1.48 times and 1.65 times respectively. Which implies that narrow matrix does not take more advantage of GPU speedup than square matrix.
