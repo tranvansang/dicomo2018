@@ -1,10 +1,10 @@
 .PHONY: paper
 paper:
-	platex paper.tex && bibtex paper && platex paper.tex && dvipdfm paper.dvi
+	platex paper.tex && bibtex paper && platex paper.tex && dvipdfmx -f ipa.map paper.dvi
 
 .PHONY: abstract
 abstract:
-	platex dicomoesample.tex && bibtex dicomoesample && platex dicomoesample.tex && dvipdf dicomoesample.dvi
+	platex dicomoesample.tex && bibtex dicomoesample && platex dicomoesample.tex && dvipdfmx -f ipa.map dicomoesample.dvi
 
 .PHONY: clean
 clean:
